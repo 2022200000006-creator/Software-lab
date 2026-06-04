@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post Dashboard</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI, sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#e0e7ff,#f8fafc);
+    padding:40px;
+    min-height:100vh;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:30px;
+    color:#1e293b;
+    font-size:2.5rem;
+}
+
+.posts-container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:25px;
+}
+
+.card{
+    background:#ffffff;
+    border-radius:15px;
+    padding:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+.card h3{
+    color:#0f172a;
+    margin-bottom:12px;
+    font-size:1.1rem;
+}
+
+.card p{
+    color:#475569;
+    line-height:1.5;
+    margin-bottom:18px;
+}
+
+.actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+button{
+    width:100%;
+    border:none;
+    padding:10px;
+    border-radius:8px;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.edit-btn{
+    background:#2563eb;
+}
+
+.edit-btn:hover{
+    background:#1d4ed8;
+}
+
+.delete-btn{
+    background:#dc2626;
+}
+
+.delete-btn:hover{
+    background:#b91c1c;
+}
+
+</style>
+</head>
+<body>
+
+<h1>Post Dashboard</h1>
+
+<div class="posts-container" id="postsContainer"></div>
+
+<script>
+
+const API_URL = "https://jsonplaceholder.typicode.com/posts";
+const postsContainer = document.getElementById("postsContainer");
+
+async function fetchPosts() {
+
+    try {
+
+        const response = await fetch(API_URL);
+        const posts = await response.json();
+
+        postsContainer.innerHTML = "";
+
+        posts.slice(0,20).forEach(post => {
+            createPostCard(post);
+        });
+
+    } catch(error) {
+
+        console.error("Error fetching posts:", error);
+
+    }
+}
+
+function createPostCard(post) {
+
+    const card = document.createElement("div");
+
+    card.className = "card";
+    card.id = `post-${post.id}`;
+
+    card.innerHTML = `
+        <h3 id="title-${post.id}">
+            ${post.title}
+        </h3>
+
+        <p>
+            ${post.body}
+        </p>
+
+        <div class="actions">
+
+            <button class="edit-btn"
+                    onclick="editPost(${post.id})">
+                Edit Post
+            </button>
+
+            <button class="delete-btn"
+                    onclick="deletePost(${post.id})">
+                Delete Post
+            </button>
+
+        </div>
+    `;
+
+    postsContainer.appendChild(card);
+}
+
+async function editPost(id) {
+
+    const titleElement =
+        document.getElementById(`title-${id}`);
+
+    const currentTitle =
+        titleElement.textContent;
+
+    const newTitle =
+        prompt("Enter new title:", currentTitle);
+
+    if(!newTitle || newTitle.trim() === ""){
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(`${API_URL}/${id}`, {
+
+                method:"PUT",
+
+                headers:{
+                    "Content-Type":"application/json"
+                },
+
+                body:JSON.stringify({
+                    id:id,
+                    title:newTitle
+                })
+
+            });
+
+        const updatedPost =
+            await response.json();
+
+        titleElement.textContent =
+            updatedPost.title;
+
+    } catch(error){
+
+        console.error("Error updating post:", error);
+
+    }
+}
+
+async function deletePost(id) {
+
+    try {
+
+        const response =
+            await fetch(`${API_URL}/${id}`, {
+                method:"DELETE"
+            });
+
+        if(response.ok){
+
+            document
+                .getElementById(`post-${id}`)
+                .remove();
+        }
+
+    } catch(error){
+
+        console.error("Error deleting post:", error);
+
+    }
+}
+
+fetchPosts();
+
+</script>
+
+</body>
+</html>
